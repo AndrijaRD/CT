@@ -2,7 +2,7 @@ import nibabel as nib
 import cv2 as cv
 import numpy as np
 
-##########################################
+##############################################################################
 #   - Lung Segmentation on a CT scan
 #
 #   This project is meant to read the chest CT scan
@@ -13,7 +13,7 @@ import numpy as np
 #   The problem was that air in the lungs and air outside of the body
 #   were both black so main challenge was how do differentiate
 #   between those two areas.
-##########################################
+################################################################################
 
 
 
