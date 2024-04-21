@@ -2,26 +2,41 @@ import nibabel as nib
 import cv2 as cv
 import numpy as np
 
+##########################################
+#   - Lung Segmentation on a CT scan
+#
+#   This project is meant to read the chest CT scan
+#   which is in .nii or .nii.gz format and then
+#   find the area of lungs on it. It does that using various 
+#   colors, the idea is to colors 3 different parts with different colors
+#   and then just count all of the pixel of a certain color
+#   The problem was that air in the lungs and air outside of the body
+#   were both black so main challenge was how do differentiate
+#   between those two areas.
+##########################################
+
+
+
 # Colors can NOT be repeat
 # for different types
 class colors:
-    air = (0, 0, 255) # it wont be vissible at the end result
+    air = (0, 0, 255) # it wont be visible at the end result
     tissue = (80, 80, 200)
     non_body = (60, 60, 60)
     lungs = (240, 160, 160)
 
 # THRESHOLD
-# controls from which value is pixel consided tissue and from which air
+# controls from which value is pixel considered tissue and from which air
 # if pixel is under the threshold it will be considered air and above as tissue
 # if its value is above 90 body will be full of random spikes, not smooth
 # if its under 30 a lot of lung area will be considered tissue, also full of spikes
 threshold = 40 
 
 # JUMP_SIZE
-# controlls what amount of the pixel can be skiped for it to still be consided same color
+# controls what amount of the pixel can be skipped for it to still be considered same color
 # so if its set to 20 that means that if i see a lot of red and then up to 20 pixel
-# of some other color i will consided it red too, its used so some small objects can be filled
-# for example, blood vesseles and patitents bed... its also in the CT and in order to be removed
+# of some other color i will considered it red too, its used so some small objects can be filled
+# for example, blood vessels and patients bed... its also in the CT and in order to be removed
 # jump size needs TO BE OVER 10 and also UNDER 25!
 jump_size = 15
 
@@ -37,29 +52,29 @@ def lungDetection(file_path):
     """
 
     # Loads the CT scan file using nibabel librarie
-    # Because librarie has some problems with return type
+    # Because library has some problems with return type
     # of function load i have to set it manually (DataobjImage class)
     file: nib.DataobjImage = nib.load(file_path) 
     
-    # CT scan file are composed of headers and the actuall images
-    # so to extarct image data get_fdata func is used
+    # CT scan file are composed of headers and the actual images
+    # so to extract image data get_fdata func is used
     raw_image = file.get_fdata() 
 
     # In order for image to be turned into opencv Mat object it
-    # first needs to be normalized. This is done by subbtracting 
+    # first needs to be normalized. This is done by subtracting 
     # every pixel in the image by the minimum value that is present on the image.
-    # This way we get that minial value of the pixel is 0.
-    # Then its devided by difference of maximum pixel value and minimum
+    # This way we get that minimal value of the pixel is 0.
+    # Then its divided by difference of maximum pixel value and minimum
     # That makes it so that all of the pixels are between 0 and 1 of value, 
-    # then they are multiplied by 255 to represent intesity of a pixel using a sinngle byte
+    # then they are multiplied by 255 to represent intensity of a pixel using a single byte
     # At the end values are converted to unsigned 8-bit intigers
     normalized = (raw_image - np.min(raw_image)) / (np.max(raw_image) - np.min(raw_image))
     normalized *= 255
     normalized = normalized.astype(np.uint8)
 
-    # Now that normalized image data is converted to opencv's Mat obejct
+    # Now that normalized image data is converted to opencv's Mat object
     image = cv.cvtColor(normalized, cv.COLOR_GRAY2BGR)
-    original = image.copy() # Copy the image now so we can return unmodified verison too
+    original = image.copy() # Copy the image now so we can return unmodified version too
 
     # Images dimensions are loaded
     height, width, _ = image.shape
@@ -126,10 +141,10 @@ def lungDetection(file_path):
         fill = True
 
         # Iterate over each pixel of the row again
-        # It will be filling everything before the first egde and everhting after the last edge
+        # It will be filling everything before the first edge and everything after the last edge
         for x in range(width):
             if len(edges) > 0:
-                # If first egde is passed turn the fill Off
+                # If first edge is passed turn the fill Off
                 if x == edges[0][0]: fill = False
                 
                 # If the last edge is passed turn the fill on again
@@ -140,8 +155,8 @@ def lungDetection(file_path):
     
     area = 0
     # It goes over each pixel AGAIN and if its air color 
-    # then that means that thats air inside the lungs
-    # since the one that was outside was colored differetly
+    # then that means that that's air inside the lungs
+    # since the one that was outside was colored differently
     # in the last for loop
     for y in range(height):
         for x in range(width):
@@ -161,8 +176,8 @@ def lungDetection(file_path):
 
 
 
-orgiginal, lungs, area = lungDetection("./src/slice016.nii.gz")
-cv.imshow('Original CT', orgiginal)
+original, lungs, area = lungDetection("./src/slice016.nii.gz")
+cv.imshow('Original CT', original)
 cv.imshow('Segmented CT', lungs)
 print("Lung area:", area)
 cv.waitKey(0)
